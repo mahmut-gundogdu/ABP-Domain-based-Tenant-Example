@@ -1,6 +1,6 @@
 import { Environment } from '@abp/ng.core';
 
-const baseUrl = 'http://localhost:4200';
+const baseUrl = 'http://multitenancydemo.local:4200';
 
 export const environment = {
   production: false,
@@ -10,7 +10,7 @@ export const environment = {
     logoUrl: '',
   },
   oAuthConfig: {
-    issuer: 'http://localhost:44394/',
+    issuer: 'http://multitenancydemo.local:44394/',
     redirectUri: baseUrl,
     clientId: 'MultiTenancyDemo_App',
     responseType: 'code',
@@ -19,7 +19,7 @@ export const environment = {
   },
   apis: {
     default: {
-      url: 'http://localhost:44394',
+      url: 'http://multitenancydemo.local:44394',
       rootNamespace: 'MultiTenancyDemo',
     },
   },
