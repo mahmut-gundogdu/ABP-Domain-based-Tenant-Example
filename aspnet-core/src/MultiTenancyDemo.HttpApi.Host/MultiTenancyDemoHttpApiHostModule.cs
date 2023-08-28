@@ -55,6 +55,14 @@ public class MultiTenancyDemoHttpApiHostModule : AbpModule
                 options.UseAspNetCore();
             });
         });
+
+        #if DEBUG
+        PreConfigure<OpenIddictServerBuilder>(options => 
+        {
+            options.UseAspNetCore()
+                .DisableTransportSecurityRequirement();
+        });
+        #endif
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)

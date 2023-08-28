@@ -10,16 +10,16 @@ export const environment = {
     logoUrl: '',
   },
   oAuthConfig: {
-    issuer: 'https://localhost:44394/',
+    issuer: 'http://localhost:44394/',
     redirectUri: baseUrl,
     clientId: 'MultiTenancyDemo_App',
     responseType: 'code',
     scope: 'offline_access MultiTenancyDemo',
-    requireHttps: true,
+    requireHttps: false,
   },
   apis: {
     default: {
-      url: 'https://localhost:44394',
+      url: 'http://localhost:44394',
       rootNamespace: 'MultiTenancyDemo',
     },
   },
