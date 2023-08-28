@@ -28,6 +28,8 @@ using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.VirtualFileSystem;
+using Volo.Abp.OpenIddict.WildcardDomains;
+using Volo.Abp.MultiTenancy;
 
 namespace MultiTenancyDemo;
 
@@ -56,13 +58,20 @@ public class MultiTenancyDemoHttpApiHostModule : AbpModule
             });
         });
 
-        #if DEBUG
-        PreConfigure<OpenIddictServerBuilder>(options => 
+#if DEBUG
+        PreConfigure<OpenIddictServerBuilder>(options =>
         {
-            options.UseAspNetCore()
-                .DisableTransportSecurityRequirement();
+            options.UseAspNetCore().DisableTransportSecurityRequirement();
         });
-        #endif
+#endif
+
+       
+
+        PreConfigure<AbpOpenIddictWildcardDomainOptions>(options =>
+        {
+            options.EnableWildcardDomainSupport = true;
+            options.WildcardDomainsFormat.Add("http://{0}.multitenancydemo.local");
+        });
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -77,11 +86,18 @@ public class MultiTenancyDemoHttpApiHostModule : AbpModule
         ConfigureVirtualFileSystem(context);
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
+
+         Configure<AbpTenantResolveOptions>(options =>
+        {
+            options.AddDomainTenantResolver("{0}.multitenancydemo.local");
+        });
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context)
     {
-        context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+        context.Services.ForwardIdentityAuthenticationForBearer(
+            OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme
+        );
     }
 
     private void ConfigureBundles()
@@ -103,10 +119,13 @@ public class MultiTenancyDemoHttpApiHostModule : AbpModule
         Configure<AppUrlOptions>(options =>
         {
             options.Applications["MVC"].RootUrl = configuration["App:SelfUrl"];
-            options.RedirectAllowedUrls.AddRange(configuration["App:RedirectAllowedUrls"]?.Split(',') ?? Array.Empty<string>());
+            options.RedirectAllowedUrls.AddRange(
+                configuration["App:RedirectAllowedUrls"]?.Split(',') ?? Array.Empty<string>()
+            );
 
             options.Applications["Angular"].RootUrl = configuration["App:ClientUrl"];
-            options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] = "account/reset-password";
+            options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] =
+                "account/reset-password";
         });
     }
 
@@ -119,17 +138,29 @@ public class MultiTenancyDemoHttpApiHostModule : AbpModule
             Configure<AbpVirtualFileSystemOptions>(options =>
             {
                 options.FileSets.ReplaceEmbeddedByPhysical<MultiTenancyDemoDomainSharedModule>(
-                    Path.Combine(hostingEnvironment.ContentRootPath,
-                        $"..{Path.DirectorySeparatorChar}MultiTenancyDemo.Domain.Shared"));
+                    Path.Combine(
+                        hostingEnvironment.ContentRootPath,
+                        $"..{Path.DirectorySeparatorChar}MultiTenancyDemo.Domain.Shared"
+                    )
+                );
                 options.FileSets.ReplaceEmbeddedByPhysical<MultiTenancyDemoDomainModule>(
-                    Path.Combine(hostingEnvironment.ContentRootPath,
-                        $"..{Path.DirectorySeparatorChar}MultiTenancyDemo.Domain"));
+                    Path.Combine(
+                        hostingEnvironment.ContentRootPath,
+                        $"..{Path.DirectorySeparatorChar}MultiTenancyDemo.Domain"
+                    )
+                );
                 options.FileSets.ReplaceEmbeddedByPhysical<MultiTenancyDemoApplicationContractsModule>(
-                    Path.Combine(hostingEnvironment.ContentRootPath,
-                        $"..{Path.DirectorySeparatorChar}MultiTenancyDemo.Application.Contracts"));
+                    Path.Combine(
+                        hostingEnvironment.ContentRootPath,
+                        $"..{Path.DirectorySeparatorChar}MultiTenancyDemo.Application.Contracts"
+                    )
+                );
                 options.FileSets.ReplaceEmbeddedByPhysical<MultiTenancyDemoApplicationModule>(
-                    Path.Combine(hostingEnvironment.ContentRootPath,
-                        $"..{Path.DirectorySeparatorChar}MultiTenancyDemo.Application"));
+                    Path.Combine(
+                        hostingEnvironment.ContentRootPath,
+                        $"..{Path.DirectorySeparatorChar}MultiTenancyDemo.Application"
+                    )
+                );
             });
         }
     }
@@ -138,24 +169,30 @@ public class MultiTenancyDemoHttpApiHostModule : AbpModule
     {
         Configure<AbpAspNetCoreMvcOptions>(options =>
         {
-            options.ConventionalControllers.Create(typeof(MultiTenancyDemoApplicationModule).Assembly);
+            options.ConventionalControllers.Create(
+                typeof(MultiTenancyDemoApplicationModule).Assembly
+            );
         });
     }
 
-    private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
+    private static void ConfigureSwaggerServices(
+        ServiceConfigurationContext context,
+        IConfiguration configuration
+    )
     {
         context.Services.AddAbpSwaggerGenWithOAuth(
             configuration["AuthServer:Authority"],
-            new Dictionary<string, string>
-            {
-                    {"MultiTenancyDemo", "MultiTenancyDemo API"}
-            },
+            new Dictionary<string, string> { { "MultiTenancyDemo", "MultiTenancyDemo API" } },
             options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "MultiTenancyDemo API", Version = "v1" });
+                options.SwaggerDoc(
+                    "v1",
+                    new OpenApiInfo { Title = "MultiTenancyDemo API", Version = "v1" }
+                );
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
-            });
+            }
+        );
     }
 
     private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
@@ -165,10 +202,12 @@ public class MultiTenancyDemoHttpApiHostModule : AbpModule
             options.AddDefaultPolicy(builder =>
             {
                 builder
-                    .WithOrigins(configuration["App:CorsOrigins"]?
-                        .Split(",", StringSplitOptions.RemoveEmptyEntries)
-                        .Select(o => o.RemovePostFix("/"))
-                        .ToArray() ?? Array.Empty<string>())
+                    .WithOrigins(
+                        configuration["App:CorsOrigins"]
+                            ?.Split(",", StringSplitOptions.RemoveEmptyEntries)
+                            .Select(o => o.RemovePostFix("/"))
+                            .ToArray() ?? Array.Empty<string>()
+                    )
                     .WithAbpExposedHeaders()
                     .SetIsOriginAllowedToAllowWildcardSubdomains()
                     .AllowAnyHeader()
