@@ -101,11 +101,24 @@ PreConfigure<AbpOpenIddictWildcardDomainOptions>(options =>
 - Open the YourProjecNameHttpHostModule file within your host project.
 - Go to ConfigureServices method and add the code:
 ```csharp
+// using Volo.Abp.MultiTenancy;
+
    Configure<AbpTenantResolveOptions>(options =>
         {
             options.AddDomainTenantResolver("{0}.multitenancydemo.local");
         });
 ```
+
+if you are using Seperated Auth, you should  
+- run `dotnet add package Owl.TokenWildcardIssuerValidator` for adding Owl.TokenWildcardIssuerValidator package at HttpApi.Host project. 
+- add 
+`options.TokenValidationParameters.IssuerValidator = TokenWildcardIssuerValidator.IssuerValidator;` and 
+`               options.TokenValidationParameters.ValidIssuers = new[]
+                {
+                    "http://{0}.multitenancydemo.local:44325/"
+                };
+` in AddJwtBearer(option => {...}) block.
+
 ## Step 8: Add Tenant
 - Go to menu and open Tenant Management.
 - Add a Tenant with name "Odin" or what do you want.
